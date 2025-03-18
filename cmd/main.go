@@ -1,37 +1,18 @@
 package main
 
 import (
-	"html/template"
-	"io"
-	"net/http"
-
-	"github.com/labstack/echo/v4"
+	"log"
+	"github.com/dhichana/grad-connect/internal/database"
+	"github.com/dhichana/grad-connect/internal/server"
 )
 
-type TemplateRenderer struct {
-	templates *template.Template
-}
-
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
-}
 
 func main() {
-	e := echo.New()
-
-
-	renderer := &TemplateRenderer{
-		templates: template.Must(template.ParseGlob("../web/templates/*.html")),
+	db, err := database.InitDB("../database.db")
+	if err != nil {
+        log.Fatalf("Failed to initialize database: %v", err)
+    }
+	if err := server.Start(db); err != nil{
+		log.Fatalf("Failed to start server: %v", err)
 	}
-	e.Renderer = renderer
-
-	e.GET("/", func(c echo.Context) error {
-		data := map[string]interface{}{
-			"Title":   "SSR in Go",
-			"Message": "Hello, Server-Side Rendering in Go!",
-		}
-		return c.Render(http.StatusOK, "index.html", data)
-	})
-
-	e.Logger.Fatal(e.Start(":1323"))
 }
